@@ -1,7 +1,14 @@
 from django.core.urlresolvers import reverse_lazy
+from django.shortcuts import get_object_or_404, redirect
+from django.views.generic.base import TemplateResponseMixin, View
 from django.views.generic.list import ListView
-from .models import Course, Module, Content
 from django.views.generic.edit import CreateView, UpdateView, DeleteView
+from django.forms.models import modelform_factory
+from django.apps import apps
+from braces.views import LoginRequiredMixin, PermissionRequiredMixin, \
+                         CsrfExemptMixin, JsonRequestResponseMixin
+from .forms import ModuleFormSet
+from .models import Course, Module, Content
 
 
 class OwnerMixin(object):
@@ -16,7 +23,7 @@ class OwnerEditMixin(object):
         return super(OwnerEditMixin, self).form_valid(form)
 
 
-class OwnerCourseMixin(OwnerMixin):
+class OwnerCourseMixin(OwnerMixin, LoginRequiredMixin):
     model = Course
 
 
@@ -30,26 +37,24 @@ class ManageCourseListView(OwnerCourseMixin, ListView):
     template_name = 'courses/manage/course/list.html'
 
 
-class CourseCreateView(#PermissionRequiredMixin,
+class CourseCreateView(PermissionRequiredMixin,
                        OwnerCourseEditMixin,
                        CreateView):
-    #permission_required = 'courses.add_course'
-    pass
+    permission_required = 'courses.add_course'
 
 
-class CourseUpdateView(#PermissionRequiredMixin,
+class CourseUpdateView(PermissionRequiredMixin,
                        OwnerCourseEditMixin,
                        UpdateView):
-    #permission_required = 'courses.change_course'
-    pass
+    permission_required = 'courses.change_course'
 
 
-class CourseDeleteView(#PermissionRequiredMixin,
+class CourseDeleteView(PermissionRequiredMixin,
                        OwnerCourseMixin,
                        DeleteView):
     success_url = reverse_lazy('manage_course_list')
     template_name = 'courses/manage/course/delete.html'
-    #permission_required = 'courses.delete_course'
+    permission_required = 'courses.delete_course'
 
 
 class CourseModuleUpdateView(TemplateResponseMixin, View):
